@@ -42,6 +42,7 @@ export AUTO_NOTIFY_VERSION="0.11.0"
         'sh'
         'bash'
         'zsh'
+        'sleep'
     )
 
 # List of full commands to ignore sending notifications for
