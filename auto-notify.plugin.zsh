@@ -137,10 +137,7 @@ function _is_auto_notify_ignored() {
     local command_list=("${(@s/|/)command}")
     local target_command="${command_list[-1]}"
     # Remove leading whitespace
-    target_command="$(echo "$target_command" | sed -e 's/^ *//')"
-    target_command_list=("${(@s/ /)target_command}")
-    target_command="${target_command_list[1]}"
-    target_command="${target_command##*/}"
+    target_command="$(echo "$target_command" | sed -E 's/^\s*//')"
 
     # Ignore the command if running over SSH and AUTO_NOTIFY_ENABLE_SSH is disabled
     if [[ -n ${SSH_CLIENT-} || -n ${SSH_TTY-} || -n ${SSH_CONNECTION-} ]] && [[ "${AUTO_NOTIFY_ENABLE_SSH-1}" == "0" ]]; then
@@ -150,8 +147,15 @@ function _is_auto_notify_ignored() {
 
     # Remove sudo prefix from command if detected
     if [[ "$target_command" == "sudo "* ]]; then
-        target_command="${target_command/sudo /}"
+        target_command="$(echo "$target_command" | sed -E 's/^sudo \s*//')"
     fi
+
+    # split the command with spaces
+    target_command_list=("${(@s/ /)target_command}")
+    # get the first element
+    target_command="${target_command_list[1]}"
+    # get the last path segment
+    target_command="${target_command##*/}"
 
     # If AUTO_NOTIFY_WHITELIST is defined, then auto-notify will ignore
     # any item not defined in the white list
