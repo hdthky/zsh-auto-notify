@@ -8,7 +8,7 @@ export AUTO_NOTIFY_VERSION="0.11.0"
     export AUTO_NOTIFY_THRESHOLD=10
 # Enable or disable notifications for SSH sessions (0 = disabled, 1 = enabled)
 [[ -z "$AUTO_NOTIFY_ENABLE_SSH" ]] &&
-    export AUTO_NOTIFY_ENABLE_SSH=0
+    export AUTO_NOTIFY_ENABLE_SSH=1
 # Enable transient notifications to prevent them from being saved in the notification history
 [[ -z "$AUTO_NOTIFY_ENABLE_TRANSIENT" ]] &&
     export AUTO_NOTIFY_ENABLE_TRANSIENT=1
@@ -52,7 +52,7 @@ function _auto_notify_message() {
     local platform="$(uname)"
     # Run using echo -e in order to make sure notify-send picks up new line
     local DEFAULT_TITLE="\"%command\" Completed"
-    local DEFAULT_BODY="$(echo -e "Total time: %elapsed seconds\nExit code: %exit_code")"
+    local DEFAULT_BODY="$(echo -e "\"%command\" completed - Total time: %elapsed seconds, Exit code: %exit_code")"
 
     local title="${AUTO_NOTIFY_TITLE:-$DEFAULT_TITLE}"
     local text="${AUTO_NOTIFY_BODY:-$DEFAULT_BODY}"
@@ -88,18 +88,7 @@ function _auto_notify_message() {
                 arguments+=("--icon=$icon")
         fi
 
-        # Check if the script is running over SSH
-        if [[ -n "${SSH_CLIENT}" || -n "${SSH_CONNECTION}" ]]; then
-            # Extract the client IP address from environment
-            local client_ip="${SSH_CLIENT%% *}"
-            [[ -z "$client_ip" ]] && client_ip="${SSH_CONNECTION%% *}"
-
-            # Forward the notify-send command to the client machine via SSH
-            ssh "${USER}@${client_ip}" "$(printf '%q ' notify-send "${arguments[@]}")"
-        else
-            # If not running over SSH, send notification locally
-            notify-send "${arguments[@]}"
-        fi
+        echo "*/query -noswitch -server local zn_receiver $body" >~/.weechat_fifo
 
     elif [[ "$platform" == "Darwin" ]]; then
         osascript \
@@ -211,8 +200,8 @@ _auto_notify_reset_tracking
 
 
 platform="$(uname)"
-if [[ "$platform" == "Linux" ]] && ! type notify-send > /dev/null; then
-    printf "'notify-send' must be installed for zsh-auto-notify to work\n"
+if [[ "$platform" == "Linux" ]] && ! type weechat > /dev/null; then
+    printf "'weechat' must be installed for zsh-auto-notify to work\n"
     printf "Please install it with your relevant package manager\n"
 else
     enable_auto_notify
