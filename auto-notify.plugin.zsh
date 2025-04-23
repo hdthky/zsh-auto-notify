@@ -224,6 +224,8 @@ if [[ "$platform" == "Linux" ]] && ! type weechat > /dev/null; then
     printf "'weechat' must be installed for zsh-auto-notify to work\n"
     printf "Please install it with your relevant package manager\n"
 else
-    weechat-headless --daemon
+    if ! pgrep weechat-head >/dev/null; then
+        weechat-headless --daemon
+    fi
     enable_auto_notify
 fi
