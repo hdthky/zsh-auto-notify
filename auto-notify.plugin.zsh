@@ -32,6 +32,16 @@ export AUTO_NOTIFY_VERSION="0.11.0"
         'htop'
         'ssh'
         'nano'
+        'cat'
+        'bat'
+        'batcat'
+        'showkey'
+        'tmux'
+        'screen'
+        'tldr'
+        'sh'
+        'bash'
+        'zsh'
     )
 
 # List of full commands to ignore sending notifications for
@@ -128,6 +138,9 @@ function _is_auto_notify_ignored() {
     local target_command="${command_list[-1]}"
     # Remove leading whitespace
     target_command="$(echo "$target_command" | sed -e 's/^ *//')"
+    target_command_list=("${(@s/ /)target_command}")
+    target_command="${target_command_list[1]}"
+    target_command="${target_command##*/}"
 
     # Ignore the command if running over SSH and AUTO_NOTIFY_ENABLE_SSH is disabled
     if [[ -n ${SSH_CLIENT-} || -n ${SSH_TTY-} || -n ${SSH_CONNECTION-} ]] && [[ "${AUTO_NOTIFY_ENABLE_SSH-1}" == "0" ]]; then
@@ -147,7 +160,7 @@ function _is_auto_notify_ignored() {
 
     if [[ -n "$AUTO_NOTIFY_WHITELIST" ]]; then
         for allowed in $AUTO_NOTIFY_WHITELIST; do
-            if [[ "$target_command" == "$allowed"* ]]; then
+            if [[ "$target_command" == "$allowed" ]]; then
                 print "no"
                 return
             fi
@@ -155,7 +168,7 @@ function _is_auto_notify_ignored() {
         print "yes"
     else
         for ignore in $AUTO_NOTIFY_IGNORE; do
-            if [[ "$target_command" == "$ignore"* ]]; then
+            if [[ "$target_command" == "$ignore" ]]; then
                 print "yes"
                 return
             fi
@@ -192,6 +205,7 @@ function _auto_notify_track() {
     # $2 is a single-line, size-limited version of the command that is always available
     # To still do something useful when history is disabled, although with reduced functionality, fall back to $2 when $1 is empty
     AUTO_COMMAND="${1:-$2}"
+    # $3 is the full command that the user has executed after alias expansion
     AUTO_COMMAND_FULL="$3"
     AUTO_COMMAND_START="$(date +"%s")"
 }
