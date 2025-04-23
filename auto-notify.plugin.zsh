@@ -34,6 +34,14 @@ export AUTO_NOTIFY_VERSION="0.11.0"
         'nano'
     )
 
+# List of full commands to ignore sending notifications for
+[[ -z "$AUTO_NOTIFY_IGNORE_FULL" ]] &&
+    export AUTO_NOTIFY_IGNORE_FULL=(
+        'python'
+        'python2'
+        'python3'
+    )
+
 function _auto_notify_format() {
     local MESSAGE="$1"
     local command="$2"
@@ -102,6 +110,17 @@ function _auto_notify_message() {
     fi
 }
 
+function _is_auto_notify_ignored_full() {
+    local command="$1"
+    for ignore in $AUTO_NOTIFY_IGNORE_FULL; do
+        if [[ "$command" == "$ignore" ]]; then
+            print "yes"
+            return
+        fi
+    done
+    print "no"
+}
+
 function _is_auto_notify_ignored() {
     local command="$1"
     # split the command if its been piped one or more times
@@ -153,7 +172,8 @@ function _auto_notify_send() {
         return
     fi
 
-    if [[ "$(_is_auto_notify_ignored "$AUTO_COMMAND_FULL")" == "no" ]]; then
+    if [[ "$(_is_auto_notify_ignored "$AUTO_COMMAND_FULL")" == "no" &&
+          "$(_is_auto_notify_ignored_full "$AUTO_COMMAND_FULL")" == "no" ]]; then
         local current="$(date +"%s")"
         let "elapsed = current - AUTO_COMMAND_START"
 
@@ -204,5 +224,6 @@ if [[ "$platform" == "Linux" ]] && ! type weechat > /dev/null; then
     printf "'weechat' must be installed for zsh-auto-notify to work\n"
     printf "Please install it with your relevant package manager\n"
 else
+    weechat-headless --daemon
     enable_auto_notify
 fi
